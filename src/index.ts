@@ -1,9 +1,9 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 
 const app = express();
 app.use(express.json());
 
-app.post('/', (req, res) => {
+app.post('/procesar', (req: Request, res: Response) => {
   const message = req.body?.message?.data;
 
   if (message) {

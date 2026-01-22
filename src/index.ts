@@ -1,20 +1,27 @@
-import express, { Request, Response } from 'express';
+import express from 'express';
+import axios from 'axios';
 
 const app = express();
 app.use(express.json());
 
-app.post('/procesar', (req: Request, res: Response) => {
-  const message = req.body?.message?.data;
+app.post('/procesar', async (req, res) => {
+  const mensaje = req.body.message;
+  const data = JSON.parse(
+    Buffer.from(mensaje.data, 'base64').toString()
+  );
 
-  if (message) {
-    const decoded = Buffer.from(message, 'base64').toString();
-    console.log('[WORKER] Mensaje recibido:', decoded);
-  }
+  const { reporteId } = data;
 
-  res.status(200).send('ok');
+  console.log('[WORKER] Evento recibido:', reporteId);
+
+  await axios.post(
+    `http://192.168.1.68:3000/api/reportes${reporteId}/procesar`,
+    { method: 'POST' }
+  );
+
+  res.status(200).send();
 });
 
-const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => {
-  console.log(`Worker escuchando en puerto ${PORT}`);
-});
+app.listen(8080, () =>
+  console.log('Worker escuchando')
+);

@@ -15,7 +15,7 @@ app.post('/procesar', async (req, res) => {
   console.log('[WORKER] Procesando reporte', reporteId);
 
   await axios.post(
-    `https://TU_API_URL/api/reportes/${reporteId}/procesar`
+    `https://reporte-worker-1041411065193.us-central1.run.app/api/reportes/${reporteId}/procesar`
   );
 
   res.status(200).send();

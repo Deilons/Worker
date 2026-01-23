@@ -1,45 +1,26 @@
 import express from 'express';
-import Redis from 'ioredis';
-import PDFDocument from 'pdfkit';
-import fs from 'fs';
+import axios from 'axios';
 
 const app = express();
 app.use(express.json());
 
-const redis = new Redis(process.env.REDIS_URL!);
-
 app.post('/procesar', async (req, res) => {
-  const mensaje = req.body.message;
-  const { reporteId } = JSON.parse(
-    Buffer.from(mensaje.data, 'base64').toString()
+  const message = req.body.message;
+  const data = JSON.parse(
+    Buffer.from(message.data, 'base64').toString()
   );
+
+  const { reporteId } = data;
 
   console.log('[WORKER] Procesando reporte', reporteId);
 
-  const reporteRaw = await redis.get(`reporte:${reporteId}`);
-  if (!reporteRaw) return res.sendStatus(200);
+  await axios.post(
+    `https://TU_API_URL/api/reportes/${reporteId}/procesar`
+  );
 
-  const reporte = JSON.parse(reporteRaw);
-
-  reporte.estado = 'PROCESANDO';
-  await redis.set(`reporte:${reporteId}`, JSON.stringify(reporte));
-
-  // trabajo pesado
-  await new Promise(r => setTimeout(r, 15000));
-
-  // generar PDF
-  const filePath = `/tmp/reporte-${reporteId}.pdf`;
-  const doc = new PDFDocument();
-  doc.pipe(fs.createWriteStream(filePath));
-  doc.text(reporte.contenido);
-  doc.end();
-
-  reporte.estado = 'COMPLETADO';
-  reporte.resultadoPdfUrl = filePath;
-
-  await redis.set(`reporte:${reporteId}`, JSON.stringify(reporte));
-
-  res.sendStatus(200);
+  res.status(200).send();
 });
 
-app.listen(8080, () => console.log('Worker listo'));
+app.listen(8080, () => {
+  console.log('Worker escuchando');
+});
